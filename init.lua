@@ -1,0 +1,2 @@
+require("haselmut")
+print("hello")
