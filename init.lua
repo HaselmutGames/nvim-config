@@ -1,2 +1,1 @@
 require("haselmut")
-print("hello")

@@ -1,2 +1,2 @@
 require("haselmut.remap")
-print("hello from haselmut")
+require("haselmut.set")
