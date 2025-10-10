@@ -27,4 +27,14 @@ return require('packer').startup(function(use)
   use('theprimeagen/harpoon')
   use('mbbill/undotree')
   use('tpope/vim-fugitive')
+
+  -- LSP
+  use{
+      'neovim/nvim-lspconfig',             -- core LSP client configurations
+      'williamboman/mason.nvim',           -- LSP/DAP/linter installer
+      'williamboman/mason-lspconfig.nvim', -- bridges mason <-> lspconfig
+      'hrsh7th/nvim-cmp',                  -- completion engine
+      'hrsh7th/cmp-nvim-lsp',              -- LSP source for nvim-cmp
+      'L3MON4D3/LuaSnip',                  -- snippet engine
+  }
 end)
