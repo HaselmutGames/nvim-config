@@ -48,32 +48,55 @@ end
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local servers = { 'lua_ls', 'omnisharp' }
 
-for _, server_name in ipairs(servers) do
-    if server_name == 'lua_ls' then
-        vim.lsp.config['lua_ls'] = {
-            on_attach = on_attach,
-            capabilities = capabilities,
-            settings = {
-                Lua = {
-                    runtime = { version = 'LuaJIT' },
-                    diagnostics = { globals = { 'vim' } },
-                    workspace = { checkThirdParty = false },
-                    telemetry = { enable = false },
-                },
-            },
-        }
-    elseif server_name == 'omnisharp' then
-        vim.lsp.config['omnisharp'] = {
-            on_attach = on_attach,
-            capabilities = capabilities,
-            cmd = { 'omnisharp' }, -- mason installs this
-            enable_editorconfig_support = true,
-            enable_roslyn_analyzers = true,
-            organize_imports_on_format = true,
-            enable_import_completion = true,
-            root_dir = function(fname)
-                return lspconfig.util.root_pattern('*.sln', '*.csproj', '.git')(fname)
-            end,
-        }
+-- Lua
+vim.lsp.config('lua_ls', {
+    on_attach = on_attach,
+    capabilities, capabilities,
+    settings = {
+        Lua = {
+            runtime = { version = 'LuaJIT' },
+            diagnostics = { globals = { 'vim' } },
+            workspace = { checkThirdParty = false },
+            telemetry = { enable = false },
+        },
+    },
+})
+
+-- C# omnisharp
+do
+    local mason_registry = require('mason-registry')
+
+    local ok, omnisharp_pkg = pcall(mason_registry.get_package, 'omnisharp')
+    if not ok or not omnisharp_pkg then
+        vim.notify('Omnisharp not installed via Mason!', vim.log.levels.ERROR)
+        return
     end
+    local install_path = omnisharp_pkg.path
+        or (omnisharp_pkg.get_install_path and omnisharp_pkg:get_install_path())
+        or (vim.fn.stdpath('data') .. '/mason/packages/omnisharp')
+
+    local wrapper_path = install_path .. '/OmniSharp'
+    if vim.fn.executable(wrapper_path) == 0 then
+        vim.notify('Omnisharp wrapper not found at ' .. exe_path, vim.log.levels.ERROR)
+        return
+    end
+
+    vim.lsp.config('omnisharp', {
+        on_attach = on_attach,
+        capabilities = capabilities,
+        cmd = { 'dotnet', wrapper_path },
+        enable_editorconfig_support = true,
+        enable_rosyln_analyzers = true,
+        organize_imports_on_format = true,
+        enable_import_completion = true,
+        root_dir = function(fname)
+            local config_util = require('lspconfig.util')
+            return config_util.root_pattern('*.sln', '*.csproj', '.git')(fname)
+        end,
+    })
 end
+
+vim.lsp.enable({
+    'lua_ls',
+    'omnisharp',
+})
