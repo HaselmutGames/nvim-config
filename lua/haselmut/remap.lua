@@ -12,7 +12,7 @@ vim.keymap.set('v', '<leader>y', '\"+y')
 vim.keymap.set('n', '<leader>Y', '\"+Y')
 
 -- split navigation
-vim.keymap.set('n', '<C-H>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-L>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-J>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-K>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+vim.keymap.set('n', '<leader>wl', '<C-W>h', { desc = 'Move focus to the left window' })
+vim.keymap.set('n', '<leader>wr', '<C-W>l', { desc = 'Move focus to the right window' })
+vim.keymap.set('n', '<leader>wd', '<C-W>j', { desc = 'Move focus to the lower window' })
+vim.keymap.set('n', '<leader>wu', '<C-W>k', { desc = 'Move focus to the upper window' })
