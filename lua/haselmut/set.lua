@@ -28,4 +28,14 @@ vim.opt.updatetime = 50
 
 --vim.opt.colorcolumn = "80"
 
+vim.g.have_nerd_font = true
+
+-- Set how neovim displays whitespaces in editor
+vim.o.list = true
+vim.opt.listchars = { tab = '» ', trail = '.', nbsp = '␣' }
+
+-- if perfoming an operation that would fail due to unsaved changes in the buffer (like ':q'),
+-- instead raise a dialog asking if you wish to save the current file(s)
+vim.o.confirm = true
+
 vim.g.mapleader = " "
