@@ -46,9 +46,31 @@ return require('packer').startup(function(use)
       },
   })
 
-  -- LSP
-  use{
+  -- LSP plugins
+  use({
+      -- 'lazydev configures Lua LSP for Neovim config, runtime and plugins
+      -- used for completion, annotations, and signatures of Neovim apis
+      'folke/lazydev.nvim',
+      ft = 'lua',
+      opts = {
+          library = {
+              -- Load luvit types when the 'vim.uv' word is found
+              { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
+          },
+      },
+  })
+  -- Main LSP configuration
+  use ({
       'neovim/nvim-lspconfig',             -- core LSP client configurations
+      dependencies = {
+          { 'mason-org/mason.nvim', opts = {} },
+          'mason-org/mason-lspconfig.nvim',
+          'WhoIsSethDaniel/mason-tool-installer.nvim',
+          { 'j-hui/fidget.nvim', opts = {} },
+          'saghen/blink.cmp',
+      },
+  })
+  use{
       'williamboman/mason.nvim',           -- LSP/DAP/linter installer
       'williamboman/mason-lspconfig.nvim', -- bridges mason <-> lspconfig
       'hrsh7th/nvim-cmp',                  -- completion engine
