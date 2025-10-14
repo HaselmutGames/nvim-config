@@ -62,19 +62,38 @@ return require('packer').startup(function(use)
   -- Main LSP configuration
   use ({
       'neovim/nvim-lspconfig',             -- core LSP client configurations
-      dependencies = {
-          { 'mason-org/mason.nvim', opts = {} },
-          'mason-org/mason-lspconfig.nvim',
+      requires = {
+          'williamboman/mason.nvim',
+          'williamboman/mason-lspconfig.nvim',
           'WhoIsSethDaniel/mason-tool-installer.nvim',
-          { 'j-hui/fidget.nvim', opts = {} },
-          'saghen/blink.cmp',
+          'j-hui/fidget.nvim',
       },
+      config = function()
+          require('mason').setup()
+          require('mason-lspconfig').setup()
+        end,
   })
-  use{
-      'williamboman/mason.nvim',           -- LSP/DAP/linter installer
-      'williamboman/mason-lspconfig.nvim', -- bridges mason <-> lspconfig
-      'hrsh7th/nvim-cmp',                  -- completion engine
-      'hrsh7th/cmp-nvim-lsp',              -- LSP source for nvim-cmp
-      'L3MON4D3/LuaSnip',                  -- snippet engine
-  }
+  use({
+      'hrsh7th/nvim-cmp',
+      requires = {
+          'hrsh7th/cmp-nvim-lsp',
+          'hrsh7th/cmp-buffer',
+          'hrsh7th/cmp-path',
+          'hrsh7th/cmp-cmdline',
+          'L3MON4D3/LuaSnip',
+      },
+      config = function()
+          local cmp = require('cmp')
+          cmp.setup({
+              mapping = cmp.mapping.preset.insert({
+                  ['<CR>'] = cmp.mapping.confirm({ select = true }),
+              }),
+              sources = cmp.config.sources({
+                  { name = 'nvim_lsp' },
+              }, {
+                  { name = 'buffer' },
+              }),
+          })
+      end,
+  })
 end)
