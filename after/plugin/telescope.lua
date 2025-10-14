@@ -5,4 +5,8 @@ vim.keymap.set('n', '<leader>ps', builtin.live_grep, { desc = 'Telescope live gr
 vim.keymap.set('n', '<leader>fs', function()
 	builtin.grep_string({ search = vim.fn.input("Grep > ") })
 end)
+-- Shortcut for searching Neovim configuration files
+vim.keymap.set('n', '<leader>sn', function()
+    builtin.find_files { cwd = vim.fn.stdpath 'config' }
+end, { desc = '[S]earch [N]eovim files' })
 
