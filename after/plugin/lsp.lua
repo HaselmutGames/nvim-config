@@ -55,14 +55,13 @@ local servers = {
     },
     omnisharp = {
         cmd = {
-            vim.fn.stdpath('data') .. '/mason/packages/omnisharp/OmniSharp',
+            vim.fn.expand('~/.local/share/nvim/mason/packages/omnisharp/OmniSharp'),
             '--languageserver',
-            '-z',
             '--hostPID',
             tostring(vim.fn.getpid()),
         },
         root_dir = function(fname)
-            return util.root_pattern('*.sln', '*.csproj', '.git')(fname)
+            return util.root_pattern('*.sln', '*.csproj', '*.slnx', '.git')(fname)
         end,
         settings = {
             FormattingOptions = { EnableEditorConfigSupport = true },
