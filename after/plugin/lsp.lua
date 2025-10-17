@@ -39,6 +39,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
 })
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local util = require('lspconfig.util')
+local omnisharp_path
+if vim.fn.has('win32') == 1 then
+    omnisharp_path = vim.fn.expand('%LOCALAPPDATA%/nvim-data/mason/packages/omnisharp/OmniSharp')
+else
+    omnisharp_path = vim.fn.expand('~/.local/share/nvim/mason/packages/omnisharp/OmniSharp')
+end
 local servers = {
     lua_ls = {
         -- cmd = {...},
@@ -55,7 +61,7 @@ local servers = {
     },
     omnisharp = {
         cmd = {
-            vim.fn.expand('~/.local/share/nvim/mason/packages/omnisharp/OmniSharp'),
+            omnisharp_path,
             '--languageserver',
             '--hostPID',
             tostring(vim.fn.getpid()),
