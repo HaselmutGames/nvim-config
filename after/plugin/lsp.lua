@@ -32,7 +32,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
         local client = vim.lsp.get_client_by_id(event.data.client_id)
         if client and client.supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
             map('<leader>th', function ()
-                vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_disabled { bufnr = event.buf })
+                local ih = vim.lsp.inlay_hint
+                local enabled = ih.is_enabled and ih.is_enabled({ bufnr = event.buf })
+                ih.enable(not enabled, { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
         end
     end,
