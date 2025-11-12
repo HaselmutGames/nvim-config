@@ -100,4 +100,8 @@ use({
         })
     end,
 })
+use({
+    'mfussenegger/nvim-jdtls',
+    ft = { 'java' },
+})
 end)
