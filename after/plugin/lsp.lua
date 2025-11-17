@@ -1,6 +1,10 @@
 -- This function gets run when LSP attaches to a particular buffer.
 -- That is to say, every time a new file is opened that is associated with
 -- an lsp this function will be executed to configure the current buffer
+local lspconfig = require('lspconfig')
+local util = require('lspconfig.util')
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
+
 vim.api.nvim_create_autocmd('LspAttach', {
     group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
     callback = function (event)
@@ -27,10 +31,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
         -- To jump back, press <C-t>.
         map('grd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
 
+        map('hd', vim.lsp.buf.hover, '[H]over [D]ocumentation')
+
         -- Create a keymap to toggle inlay hints in code,
         -- if the language server that's being used supports them.
         local client = vim.lsp.get_client_by_id(event.data.client_id)
-        if client and client.supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
+        if client and vim.lsp.inlay_hint then
             map('<leader>th', function ()
                 local ih = vim.lsp.inlay_hint
                 local enabled = ih.is_enabled and ih.is_enabled({ bufnr = event.buf })
@@ -39,24 +45,41 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end
     end,
 })
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
-local util = require('lspconfig.util')
-local omnisharp_path
--- Add Java JDTLS LSP setup
+-- =======================================
+-- Path setup for JDTLS
+-- =======================================
 local jdtls_path = vim.fn.stdpath('data') .. '/mason/packages/jdtls'
 local java_config = jdtls_path .. '/config_linux' -- change if on windows or mac
 local java_jar = vim.fn.glob(jdtls_path .. '/plugins/org.eclipse.equinox.launcher_*.jar')
-local root_dir = util.root_pattern('.git', 'mvnw', 'gradlew', 'pom.xml', 'build.gradle')
 
-local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
-local workspace_dir = vim.fn.stdpath('data') .. '/jdtls-workspace/' .. project_name
+-- Workspace per project
+local function jdtls_workspace()
+    local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
+    return vim.fn.stdpath('data') .. '/jdtls-workspace/' .. project_name
+end
 
+-- Detect Java project types
+local jdtls_root = util.root_pattern('pom.xml', 'build.gradle', 'settings.gradle', '.git')
+local java_ls_root = function (fname)
+    -- Only start java-language-server if JDTLS root does not match
+    if not jdtls_root(fname) then
+        return util.root_pattern('.git', '*.java')(fname)
+    end
+end
+-- =======================================
+-- Path setup for omnisharp C#
+-- =======================================
+local omnisharp_path
 if vim.fn.has('win32') == 1 then
     omnisharp_path = vim.fn.expand('%LOCALAPPDATA%/nvim-data/mason/packages/omnisharp/OmniSharp')
 else
     omnisharp_path = vim.fn.expand('~/.local/share/nvim/mason/packages/omnisharp/OmniSharp')
 end
+-- =======================================
+-- LSP server definitions
+-- =======================================
 local servers = {
+    -- Lua
     lua_ls = {
         -- cmd = {...},
         -- filetypes = {...},
@@ -66,10 +89,12 @@ local servers = {
                 completion = {
                     callSnippet = 'Replace',
                 },
-                diagnostics = { disable = { 'missing-fields' } },
+                diagnostics = { globals = { 'vim' }, disable = { 'missing-fields' } },
             },
         },
     },
+
+    -- C# - OmniSharp
     omnisharp = {
         cmd = {
             omnisharp_path,
@@ -85,6 +110,8 @@ local servers = {
             Sdk = { IncludePrereleases = true },
         },
     },
+
+    -- Java - JDTLS (Maven + Gradle)
     jdtls = {
         cmd = {
             'java',
@@ -99,9 +126,43 @@ local servers = {
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
             '-jar', java_jar,
             '-configuration', java_config,
-            '-data', workspace_dir,
+            '-data', jdtls_workspace(),
         },
-        root_dir = root_dir,
+        root_dir = jdtls_root,
+        capabilities = capabilities,
+        settings = {
+            java = {
+                format = {
+                    enabled = true,
+                    settings = {
+                        url = vim.fn.stdpath('data') .. '/mason/packages/google-java-format/google-java-format.xml',
+                        profile = 'GoogleStyle',
+                    },
+                },
+                signatureHelp = { enabled = true },
+                contentProvider = { preferred = 'fernflower' },
+                completion = {
+                    favoriteStaticMembers = {
+                        'org.junit.Assert.*',
+                        'org.junit.Assume.*',
+                        'org.junit.jupiter.api.Assertions.*',
+                        'org.junit.jupiter.api.Assumptions.*',
+                        'org.junit.jupiter.api.DynamicContainer.*',
+                        'org.junit.jupiter.api.DynamicTest.*'
+                    },
+                    filteredTypes = { 'java.awt.*', 'com.sun.*' },
+                },
+            },
+        },
+        init_options = {
+            bundles = {},
+        },
+    },
+
+    -- Java (Simple projects) - georgewfraser/java-language-server
+    java_language_server = {
+        cmd = { vim.fn.expand('~/.local/share/nvim/mason/packages/java-language-server/java-language-server') },
+        root_dir = java_ls_root,
         capabilities = capabilities,
         settings = {
             java = {
@@ -132,22 +193,24 @@ local servers = {
         },
     },
 }
+
+-- =======================================
+-- Setup servers through Mason
+-- =======================================
 local ensure_installed = vim.tbl_keys(servers or {})
 vim.list_extend(ensure_installed, {
     'stylua', -- format lua code
 })
-require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
+require('mason').setup()
 require('mason-lspconfig').setup {
-    ensure_installed = {},
     automatic_installation = false,
     handlers = {
         function (server_name)
             local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above.
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+            server.capabilities = capabilities
+            lspconfig[server_name].setup(server)
         end,
     },
 }
+
+require('mason-tool-installer').setup { ensure_installed = ensure_installed }
