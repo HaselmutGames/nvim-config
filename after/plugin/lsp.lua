@@ -33,6 +33,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
         map('hd', vim.lsp.buf.hover, '[H]over [D]ocumentation')
 
+        -- Format file
+        map('ff', vim.lsp.buf.format, '[F]ormat [F]ile')
+
         -- Create a keymap to toggle inlay hints in code,
         -- if the language server that's being used supports them.
         local client = vim.lsp.get_client_by_id(event.data.client_id)
@@ -49,7 +52,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
 -- Path setup for JDTLS
 -- =======================================
 local jdtls_path = vim.fn.stdpath('data') .. '/mason/packages/jdtls'
-local java_config = jdtls_path .. '/config_linux' -- change if on windows or mac
+-- Detect Platform
+local system = vim.loop.os_uname().sysname
+local java_config
+if system:find('Windows') then
+    java_config = jdtls_path .. '/config_win'
+elseif system:find('Darwin') then
+    java_config = jdtls_path .. '/config_mac'
+else
+    java_config = jdtls_path .. '/config_linux'
+end
 local java_jar = vim.fn.glob(jdtls_path .. '/plugins/org.eclipse.equinox.launcher_*.jar')
 
 -- Workspace per project
