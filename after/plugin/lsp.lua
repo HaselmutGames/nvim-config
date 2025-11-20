@@ -34,7 +34,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         map('hd', vim.lsp.buf.hover, '[H]over [D]ocumentation')
 
         -- Format file
-        map('ff', vim.lsp.buf.format, '[F]ormat [F]ile')
+        map('<leader>ff', vim.lsp.buf.format, '[F]ormat [F]ile')
 
         -- Create a keymap to toggle inlay hints in code,
         -- if the language server that's being used supports them.
