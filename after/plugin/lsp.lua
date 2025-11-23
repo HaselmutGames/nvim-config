@@ -5,6 +5,9 @@ local lspconfig = require("lspconfig")
 local util = require("lspconfig.util")
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
+-- =======================================
+-- LSP attach keymaps
+-- =======================================
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
 	callback = function(event)
@@ -36,6 +39,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		-- Format file
 		map("<leader>ff", vim.lsp.buf.format, "[F]ormat [F]ile")
 
+        -- Show diagnostics
+        map("<leader>ld", vim.diagnostics.open_float, "Show [L]ine [D]iagnostics")
+
 		-- Create a keymap to toggle inlay hints in code,
 		-- if the language server that's being used supports them.
 		local client = vim.lsp.get_client_by_id(event.data.client_id)
@@ -49,11 +55,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 -- =======================================
--- Path setup for JDTLS
+-- Platform detection and JDTLS config
 -- =======================================
-local jdtls_path = vim.fn.stdpath("data") .. "/mason/packages/jdtls"
--- Detect Platform
 local system = vim.loop.os_uname().sysname
+local jdtls_path = vim.fn.stdpath("data") .. "/mason/packages/jdtls"
+local java_jar = vim.fn.glob(jdtls_path .. "/plugins/org.eclipse.equinox.launcher_*.jar")
+
 local java_config
 if system:find("Windows") then
 	java_config = jdtls_path .. "/config_win"
@@ -62,7 +69,6 @@ elseif system:find("Darwin") then
 else
 	java_config = jdtls_path .. "/config_linux"
 end
-local java_jar = vim.fn.glob(jdtls_path .. "/plugins/org.eclipse.equinox.launcher_*.jar")
 
 -- Workspace per project
 local function jdtls_workspace()
@@ -70,14 +76,9 @@ local function jdtls_workspace()
 	return vim.fn.stdpath("data") .. "/jdtls-workspace/" .. project_name
 end
 
--- Detect Java project types
-local jdtls_root = util.root_pattern("pom.xml", "build.gradle", "settings.gradle", ".git")
-local java_ls_root = function(fname)
-	-- Only start java-language-server if JDTLS root does not match
-	if not jdtls_root(fname) then
-		return util.root_pattern(".git", "*.java")(fname)
-	end
-end
+-- root detection for java projects
+local jdtls_root = util.root_pattern("pom.xml", "build.gradle", "settings.gradle", ".git", "src", "*.java")
+
 -- =======================================
 -- Path setup for omnisharp C#
 -- =======================================
@@ -145,7 +146,9 @@ local servers = {
 			"-data",
 			jdtls_workspace(),
 		},
-		root_dir = jdtls_root,
+		root_dir = function (fname)
+		    return jdtls_root(fname) or util.root_pattern(".git")(fname) or vim.fn.getcwd()
+		end,
 		capabilities = capabilities,
 		settings = {
 			java = {
@@ -169,40 +172,9 @@ local servers = {
 					},
 					filteredTypes = { "java.awt.*", "com.sun.*" },
 				},
-			},
-		},
-		init_options = {
-			bundles = {},
-		},
-	},
-
-	-- Java (Simple projects) - georgewfraser/java-language-server
-	java_language_server = {
-		cmd = { vim.fn.expand("~/.local/share/nvim/mason/packages/java-language-server/java-language-server") },
-		root_dir = java_ls_root,
-		capabilities = capabilities,
-		settings = {
-			java = {
-				format = {
-					enabled = true,
-					settings = {
-						url = vim.fn.stdpath("data") .. "/mason/packages/google-java-format/google-java-format.xml",
-						profile = "GoogleStyle",
-					},
-				},
-				signatureHelp = { enabled = true },
-				contentProvider = { preferred = "fernflower" },
-				completion = {
-					favoriteStaticMembers = {
-						"org.junit.Assert.*",
-						"org.junit.Assume.*",
-						"org.junit.jupiter.api.Assertions.*",
-						"org.junit.jupiter.api.Assumptions.*",
-						"org.junit.jupiter.api.DynamicContainer.*",
-						"org.junit.jupiter.api.DynamicTest.*",
-					},
-					filteredTypes = { "java.awt.*", "com.sun.*" },
-				},
+                configuration = {
+                    updateBuildConfiguration = "interactive",
+                },
 			},
 		},
 		init_options = {
