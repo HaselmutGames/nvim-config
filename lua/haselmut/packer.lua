@@ -104,4 +104,11 @@ use({
     'mfussenegger/nvim-jdtls',
     ft = { 'java' },
 })
+use({
+    'numToStr/Comment.nvim',
+    opts = {}
+})
+use({
+    'JoosepAlviste/nvim-ts-context-commentstring'
+})
 end)
