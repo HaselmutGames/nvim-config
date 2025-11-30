@@ -1,8 +1,9 @@
-require('Comment').setup({
-    pre_hook = function (ctx)
-        local ok, ts_comment = pcall(require, 'ts_context_commentstring.integrations.comment_nvim')
-        if ok then
-            return ts_comment.create_pre_hook()(ctx)
-        end
-    end,
+vim.g.skip_ts_context_commentstring_module = true
+
+require("ts_context_commentstring").setup({
+  enable_autocmd = false,
+})
+
+require("Comment").setup({
+  pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
 })
