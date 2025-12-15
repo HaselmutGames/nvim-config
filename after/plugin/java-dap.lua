@@ -3,6 +3,7 @@
 -- :lua require'jdtls'.test_nearest_method()
 -- :lua require'jdtls'.test_class()
 -- :lua require'jdtls'.pick_test()
+local map = vim.keymap.set
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'java',
   callback = function()
@@ -29,5 +30,30 @@ vim.api.nvim_create_autocmd('FileType', {
         },
       },
     })
+
+    -- Setup DAP
+    jdtls.setup_dap({ hotcodereplace = 'auto' })
+    jdtls.setup.add_commands()
+
+    -- Remaps for debug
+    map('n', '<leader>dm', function ()
+        require('jdtls').test_nearest_method()
+    end, { desc = 'Java: [D]ebug nearest test [M]ethod', buffer = true})
+
+    map('n', '<leader>dc', function ()
+        require('jdtls').test_class()
+    end, { desc = 'Java: [D]ebug [C]lass', buffer = true})
+
+    map('n', '<leader>dr', function ()
+        require('jdtls').restart()
+    end, { desc = 'Java: [D]ebug [R]estart', buffer = true})
+
+    map('n', '<leader>db', function ()
+        require('dap').toggle_breakpoint()
+    end, { desc = '[D]AP: Toggle [B]reakpoint', buffer = true})
+
+    map('n', '<leader>dC', function ()
+        require('dap').continue()
+    end, { desc = '[D]AP: [C]ontinue/Run', buffer = true})
   end,
 })
